@@ -1,6 +1,6 @@
 import ErrorHandler from "../utils/ErrorHandler.js";
 import { User } from "../models/User.model.js";
-import Response from "../utils/Response.js";
+import Response from "../utils/ResponseHandler.js";
 import jwt from "jsonwebtoken";
 const getAccessAndRefreshToken = async (userId) => {
   try {
@@ -125,9 +125,11 @@ export const changePassword = async (req, res) => {
   if (!isPasswordCorrect) throw new ErrorHandler(401, "Invalid Password");
   user.password = newPassword;
   await user.save({ validateBeforeSave: false });
+  const loginUser = await User.findById(user._id).select("-password -refreshToken");
+
   return res
     .status(200)
-    .json(new Response(200, user, "Password Changed successfully"));
+    .json(new Response(200, loginUser, "Password Changed successfully"));
 };
 
 export const refreshAccessToken = async (req, res) => {
@@ -155,7 +157,7 @@ export const refreshAccessToken = async (req, res) => {
     const { accessToken, refreshToken } = await getAccessAndRefreshToken(
       user._id
     );
-    const loggedInUser = await User.findById(user._id);
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -179,6 +181,7 @@ export const updateDetails = async (req, res) => {
     throw new ErrorHandler(400, "Details must not be empty");
   }
   try {
+    console.log(req.user)
     const user = await User.findByIdAndUpdate(
       req.user?._id,
       {
@@ -219,4 +222,6 @@ export const deleteAccount = async (req,res)=>{
         return res.status(error.statusCode || 500).json(new Response(error.statusCode || 500,{},"Unable to delete user"))
     }
 }
+
+
 

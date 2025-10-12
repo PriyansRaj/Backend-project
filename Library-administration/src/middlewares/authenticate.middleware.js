@@ -17,6 +17,7 @@ export const verifyJWT=async(req,res,next)=>{
             throw new ErrorHandler(404,"User not found");
         }
         req.user = user;
+        req.role = user.role;
         next();
     } catch (error) {
         next(error)
@@ -24,14 +25,14 @@ export const verifyJWT=async(req,res,next)=>{
 }
 
 
-export const authorizedRoles = async(allowedRole)=>{
+export const authorizedRoles = (allowedRole)=>{
     return (req,res,next)=>{
         try {
             if(!req.user?.role){
-                throw new ErrorHandler(400,"Role is required");
+                throw new ErrorHandler(400, "User role not found");
             }
             if(!allowedRole.includes(req.user?.role)){
-                throw new ErrorHandler(401,"Unauthorized Access");
+                throw new ErrorHandler(403, "Unauthorized: Access denied");
             }
             next()
         } catch (error) {

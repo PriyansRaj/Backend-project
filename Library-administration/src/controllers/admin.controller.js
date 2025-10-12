@@ -1,7 +1,6 @@
-import e from "express";
 import { User } from "../models/User.model.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
-import Response from "../utils/Response.js";
+import Response from "../utils/ResponseHandler.js";
 import { Book } from "../models/Book.model.js";
 export const getAllUser = async (req, res) => {
   try {
@@ -63,7 +62,7 @@ export const getAllBooks = async(req,res)=>{
     }
 }
 
-export const toggleUSerStatus = async(req,res)=>{
+export const toggleUserStatus = async(req,res)=>{
     try {
         const {username,isActive} = req.body;
         if(typeof isActive !=='boolean')
