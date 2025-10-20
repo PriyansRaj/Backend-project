@@ -6,6 +6,7 @@ import { Product } from '../models/Product.model.js';
 import { Order } from '../models/Orders.model.js';
 import { CartItem } from '../models/CartItem.model.js';
 import { OrderItem } from '../models/OrderItem.model.js';
+import password from '../middlewares/ password.middleware.js';
 const getAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -64,6 +65,43 @@ export const signup = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+export const googleLogin = async (req, res, next) => {
+  password.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+};
+
+export const googleCallBack = (req, res, next) => {
+  password.authenticate('google', { failureRedirect: '/api/v1/user/login' }, (err, user) => {
+    if (err || !user) return next(new ApiError(401, 'Authentication failed'));
+    const accessToken = jwt.sign({ _id: user._id }, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: '15m',
+    });
+    res.cookie('accessToken', accessToken, { httpOnly: true });
+    res.cookie('accessToken', accessToken, { httpOnly: true });
+    return res
+      .status(200)
+      .json(new Response(200, { user, accessToken }, 'Google login successful'));
+  })(req, res, next);
+};
+
+export const githubLogin = (req, res, next) => {
+  passport.authenticate('github', { scope: ['user:email'] })(req, res, next);
+};
+
+export const githubCallback = (req, res, next) => {
+  passport.authenticate('github', { failureRedirect: '/api/v1/user/login' }, (err, user) => {
+    if (err || !user) return next(new ApiError(401, 'GitHub authentication failed'));
+
+    const accessToken = jwt.sign({ _id: user._id }, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: '15m',
+    });
+
+    res.cookie('accessToken', accessToken, { httpOnly: true });
+    return res
+      .status(200)
+      .json(new Response(200, { user, accessToken }, 'GitHub login successful'));
+  })(req, res, next);
 };
 
 export const login = async (req, res, next) => {

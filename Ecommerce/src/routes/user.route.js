@@ -6,6 +6,8 @@ import {
   clearCart,
   deleteAccount,
   getUserOrders,
+  githubLogin,
+  googleLogin,
   login,
   logout,
   orderItem,
@@ -22,6 +24,10 @@ import { upload } from '../middlewares/upload.middleware.js';
 const router = Router();
 
 router.route('/signup').post(upload.single('avatar'), signup);
+router.route('/login/google').get(googleLogin);
+router.route('/login/google/callback').get(googleLogin);
+router.route('/login/github').get(githubLogin);
+router.route('/login/github/callback').get(githubLogin);
 router.route('/login').post(login);
 router.route('/logout').post(logout);
 router.route('/refreshAccessToken').get(refreshAccessToken);
