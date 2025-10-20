@@ -57,7 +57,7 @@ A powerful and modular **Node.js + Express** backend for an e-commerce platform,
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/ecommerce-backend.git
+git clone git@github.com:PriyansRaj/Backend-project.git
 cd ecommerce-backend
 ```
 
