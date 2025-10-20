@@ -26,7 +26,6 @@ export const addProduct = async (req, res, next) => {
       };
     }
 
-    // Check or create category
     let newCategory = await Category.findOne({ name: category.name });
     if (!newCategory) {
       newCategory = new Category({

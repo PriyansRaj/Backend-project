@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import {
   addItemToCart,
+  cancelOrder,
   changePassword,
   clearCart,
   deleteAccount,
+  getUserOrders,
   login,
   logout,
+  orderItem,
   reduceProductQuantity,
   refreshAccessToken,
   removeItemFromCart,
@@ -24,12 +27,16 @@ router.route('/logout').post(logout);
 router.route('/refreshAccessToken').get(refreshAccessToken);
 router.route('/deleteUser').delete(authenticate, deleteAccount);
 
-router.route('/updateAvatar').patch(authenticate, upload.single('avatar'), updateAvatar);
-router.route('/updateDetails').patch(updateDetails);
-router.route('/changePassword').patch(authenticate, changePassword);
+router.route('/update/avatar').patch(authenticate, upload.single('avatar'), updateAvatar);
+router.route('/upate/details').patch(updateDetails);
+router.route('/update/password').patch(authenticate, changePassword);
 
-router.route('/addItemToCart/:productName').post(authenticate, addItemToCart);
-router.route('/removeItemFromCart/:productName').delete(authenticate, removeItemFromCart);
-router.route('/reduceProductQuantity/:productName').patch(authenticate, reduceProductQuantity);
-router.route('/clearCart').delete(authenticate, clearCart);
+router.route('/cart/add/:productName').post(authenticate, addItemToCart);
+router.route('/cart/remove/:productName').delete(authenticate, removeItemFromCart);
+router.route('/cart/quantityReduce/:productName').patch(authenticate, reduceProductQuantity);
+router.route('/cart/clear').delete(authenticate, clearCart);
+
+router.route('/order/cart').post(authenticate, orderItem);
+router.route('/order/getAll').get(authenticate, getUserOrders);
+router.route('/order/cancel').patch(authenticate, cancelOrder);
 export default router;

@@ -5,6 +5,7 @@ import { User } from '../models/User.model.js';
 import { Product } from '../models/Product.model.js';
 import { Order } from '../models/Orders.model.js';
 import { CartItem } from '../models/CartItem.model.js';
+import { OrderItem } from '../models/OrderItem.model.js';
 const getAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -282,6 +283,93 @@ export const clearCart = async (req, res, next) => {
     cart.items = [];
     cart.save();
     return res.status(200).json(new Response(200, {}, 'Cart removed successfully'));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const orderItem = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) throw new ApiError(401, 'Unauthenticated access');
+    const cart = await CartItem.findOne({ user: userId }).populate('items.product');
+    if (!cart || !cart.items.length) throw new ApiError(400, 'Cart is empty');
+    let totalAmount = 0;
+    cart.items.forEach((item) => {
+      totalAmount += item.product.finalPrice * item.quantity;
+    });
+    const order = new Order({
+      user_id: userId,
+      total_amount: totalAmount,
+      status: 'Placed',
+    });
+    await order.save();
+    const orderItems = cart.items.map((item) => ({
+      order: order._id,
+      product: item.product._id,
+      quantity: item.quantity,
+      price: item.product.finalPrice,
+    }));
+    await OrderItem.insertMany(orderItems);
+    await cartItem.findByIdAndDelete({ user: userId });
+
+    return res
+      .status(200)
+      .json(new Response(200, { orderId: order._id }, 'Order placed successfully'));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserOrders = async (req, res, next) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) throw new ApiError(401, 'Unauthenticated Access');
+    const orders = await Order.find({ user_id: userId }).sort({ createdAt: -1 });
+
+    const OrdersWithItems = await Promise.all(
+      orders.map(async (order) => {
+        const items = await OrderItem.find({ order: order._id }).populate('product', '-__v');
+        return {
+          orderId: order._id,
+          status: order.status,
+          totalAmount: order.total_amount,
+          createdAt: order.createdAt,
+          items: items.map((i) => ({
+            productName: i.product.name,
+            quantity: i.quantity,
+            price: i.price,
+            subtotal: i.subtotal,
+          })),
+        };
+      })
+    );
+    return res
+      .status(200)
+      .json(new Response(200, OrdersWithItems, 'Orders history fetched Successfully'));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelOrder = async (req, res, next) => {
+  try {
+    const { userId } = req.user?._id;
+    const { orderId } = req.params;
+    if (!userId) throw new ApiError(401, 'Unauthenticated Access');
+    if (!orderId) throw new ApiError(400, 'Order id is required');
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      {
+        $set: { status: 'cancelled' },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    if (!order) throw new ApiError(404, 'Order not found');
+    return res.status(200).json(new Response(200, order, 'Order cancelled successfully'));
   } catch (error) {
     next(error);
   }
